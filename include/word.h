@@ -36,19 +36,19 @@ typedef struct {
  * @return word_t A new structure containing the copied string.
  * @warning If string exceeds MAX_WORD_SIZE, it will be truncated.
  */
-word_t create_word(const char* string);
+word_t word_create(const char* string);
 
 /**
  * @brief Updates the content of an existing word_t structure.
  * * @param word Pointer to the word_t instance to modify.
  * @param string The new null-terminated string to store.
  */
-void modify_word(word_t* word, const char* string);
+void word_modify(word_t* word, const char* string);
 
 /**
  * @brief Resets the word structure by clearing the buffer and setting length to zero.
  * * @param word Pointer to the word_t instance to be cleared.
  */
-void clear_word(word_t* word);
+void word_clear(word_t* word);
 
 #endif /* WORD_H */

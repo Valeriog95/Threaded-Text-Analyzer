@@ -6,7 +6,7 @@
 #include "word.h"
 #include <string.h>
 
-word_t create_word(const char* string) {
+word_t word_create(const char* string) {
 
     word_t result;
 
@@ -15,7 +15,7 @@ word_t create_word(const char* string) {
     return result;
 }
 
-void modify_word(word_t* word, const char* string) {
+void word_modify(word_t* word, const char* string) {
 
     if (!word || !string) return;
 
@@ -33,7 +33,7 @@ void modify_word(word_t* word, const char* string) {
     word->length = strlen(word->value);
 }
 
-void clear_word(word_t* word) {
+void word_clear(word_t* word) {
 
     if (!word) return;
 
