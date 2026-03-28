@@ -5,6 +5,8 @@
 
 add_library(analyzer_core STATIC
     word.c
+    node.c
+    map.c
 )
 
 target_include_directories(analyzer_core PUBLIC ../include)
