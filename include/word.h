@@ -13,6 +13,7 @@
 #define WORD_H
 
 #include <stddef.h>  /* Required for size_t in C */
+#include <stdbool.h>  /* Required for bool in C */
 
 /** * @brief Maximum allowed length for a single word based on requirements.
  * @note Adjust this value if the input text contains longer tokens.
@@ -50,5 +51,15 @@ void word_modify(word_t* word, const char* string);
  * * @param word Pointer to the word_t instance to be cleared.
  */
 void word_clear(word_t* word);
+
+/**
+ * @brief Compares two word_t structures for equality.
+ * @details First checks length for O(1) mismatch detection, 
+ * then performs a memory comparison.
+ * * @param rhs Right-hand side word.
+ * @param lhs Left-hand side word.
+ * @return true if words are identical, false otherwise.
+ */
+bool word_compare(const word_t* rhs, const word_t* lhs);
 
 #endif /* WORD_H */
