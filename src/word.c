@@ -10,7 +10,7 @@ word_t word_create(const char* string) {
 
     word_t result;
 
-    modify_word(&result, string);
+    word_modify(&result, string);
     
     return result;
 }
