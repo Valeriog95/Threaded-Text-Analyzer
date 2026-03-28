@@ -29,6 +29,10 @@ RB_Tree* rb_tree_create() {
 
 
 void rb_tree_insert(RB_Tree *tree, const char *key, int value) {
+    
+    if (rb_tree_at(tree, key) != tree->nil)
+        return;
+    
     RB_Node *z = rb_node_create(tree, key, value);
     RB_Node *y = tree->nil;
     RB_Node *x = tree->root;

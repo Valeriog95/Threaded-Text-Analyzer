@@ -56,11 +56,12 @@ typedef struct {
 RB_Tree* rb_tree_create();
 
 /**
- * @brief Inserts or updates a key-value pair in the tree.
+ * @brief Inserts a new key-value pair into the tree if the key does not exist.
  * @param tree Pointer to the tree controller.
- * @param key String to be stored (will be converted to word_t).
- * @param value Integer value associated with the key.
- * @note Triggers RBT rebalancing (rotations and recoloring) to maintain O(log n).
+ * @param key String to be stored (converted to word_t).
+ * @param value Integer value to associate with the new key.
+ * @note If the key already exists, the function returns without modifying the tree.
+ * @note Triggers RBT rebalancing (rotations/recoloring) to maintain O(log n) height.
  */
 void rb_tree_insert(RB_Tree *tree, const char *key, int value);
 
