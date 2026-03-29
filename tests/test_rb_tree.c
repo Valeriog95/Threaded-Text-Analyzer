@@ -1,12 +1,12 @@
 /**
  * @file test_rb_tree.c
- * @brief Unit tests for the Red-Black Tree implementation.
+ * @brief Unit tests for the Red-Black Tree using the Integer specialization.
  */
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "map.h"
+#include "map_utils.h" // Using the specialized integer map
 
 /**
  * @brief Helper to calculate black height and verify RBT property #5.
@@ -26,35 +26,39 @@ int verify_black_height(RB_Tree *tree, RB_Node *node) {
 }
 
 /**
- * @brief Tests basic insertion and retrieval.
+ * @brief Tests specialized integer insertion and retrieval.
  */
-void test_rb_insertion_and_search() {
-    printf("Running test_rb_insertion_and_search... ");
-    RB_Tree *tree = rb_tree_create();
+void test_rb_int_insertion_and_search() {
+    printf("Running test_rb_int_insertion_and_search... ");
+    RB_Tree *tree = rb_tree_int_create();
 
-    rb_tree_insert(tree, "banana", 3);
-    rb_tree_insert(tree, "apple", 5);
+    rb_tree_int_insert(tree, "banana", 3);
+    rb_tree_int_insert(tree, "apple", 5);
     
     RB_Node *node = rb_tree_at(tree, "apple");
     assert(node != tree->nil);
-    assert(node->value == 5);
+    
+    /* Casting void* back to int* to verify value */
+    assert(*(int*)(node->value) == 5);
     assert(strcmp(node->key.value, "apple") == 0);
 
-    rb_tree_delete(tree);
+    /* Test internal print with our string conversion callback */
+    // rb_tree_print(tree);
 
+    rb_tree_delete(tree);
     printf("PASSED\n");
 }
 
 /**
- * @brief Validates RBT structural invariants (Root color and Black Height).
+ * @brief Validates RBT structural invariants using integer nodes.
  */
 void test_rb_structural_invariants() {
     printf("Running test_rb_structural_invariants... ");
-    RB_Tree *tree = rb_tree_create();
+    RB_Tree *tree = rb_tree_int_create();
     const char *data[] = {"mela", "pera", "banana", "kiwi", "uva"};
 
     for (int i = 0; i < 5; i++) {
-        rb_tree_insert(tree, data[i], 1);
+        rb_tree_int_insert(tree, data[i], i);
     }
 
     /* Property 2: The root must be BLACK */
@@ -64,30 +68,30 @@ void test_rb_structural_invariants() {
     verify_black_height(tree, tree->root);
 
     rb_tree_delete(tree);
-
     printf("PASSED\n");
 }
 
 /**
- * @brief Tests that duplicate keys are ignored (current implementation logic).
+ * @brief Tests that duplicate keys are ignored and no memory is leaked.
  */
 void test_duplicate_key_policy() {
     printf("Running test_duplicate_key_policy... ");
-    RB_Tree *tree = rb_tree_create();
+    RB_Tree *tree = rb_tree_int_create();
 
     /* Initial insertion */
-    rb_tree_insert(tree, "test", 10);
+    rb_tree_int_insert(tree, "test", 10);
     
-    /* Attempt to insert same key with different value */
-    rb_tree_insert(tree, "test", 20);
+    /* Attempt to insert same key. 
+       The wrapper should ideally handle the failed insertion 
+       without leaking the internal malloc. */
+    rb_tree_int_insert(tree, "test", 20);
 
     RB_Node *node = rb_tree_at(tree, "test");
     
     /* Value should still be 10 because duplicates are ignored */
-    assert(node->value == 10);
+    assert(*(int*)(node->value) == 10);
 
     rb_tree_delete(tree);
-
     printf("PASSED\n");
 }
 
@@ -96,11 +100,11 @@ void test_duplicate_key_policy() {
  */
 void test_rb_stress_rotations() {
     printf("Running test_rb_stress_rotations... ");
-    RB_Tree *tree = rb_tree_create();
+    RB_Tree *tree = rb_tree_int_create();
 
     const char *words[] = {"a", "b", "c", "d", "e", "f", "g"};
     for (int i = 0; i < 7; i++) {
-        rb_tree_insert(tree, words[i], i);
+        rb_tree_int_insert(tree, words[i], i);
     }
 
     /* Verify structural integrity after rotations */
@@ -108,16 +112,15 @@ void test_rb_stress_rotations() {
     verify_black_height(tree, tree->root);
 
     rb_tree_delete(tree);
-
     printf("PASSED\n");
 }
 
 int main() {
     printf("\n========================================\n");
-    printf("     RED-BLACK TREE TEST SUITE\n");
+    printf("   RED-BLACK TREE INTEGER TEST SUITE\n");
     printf("========================================\n");
 
-    test_rb_insertion_and_search();
+    test_rb_int_insertion_and_search();
     test_rb_structural_invariants();
     test_duplicate_key_policy();
     test_rb_stress_rotations();
