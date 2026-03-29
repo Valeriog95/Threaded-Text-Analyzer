@@ -80,4 +80,12 @@ RB_Node* rb_tree_at(RB_Tree *tree, const char *key);
  */
 void rb_tree_print(RB_Tree *tree);
 
+/**
+ * @brief Deallocates the entire Red-Black Tree and all its associated memory.
+ * @details This function performs a post-order traversal to safely free each node,
+ * the sentinel NIL node, and finally the tree controller itself.
+ * @param tree Pointer to the tree to be destroyed.
+ */
+void rb_tree_delete(RB_Tree *tree);
+
 #endif /* MAP_H */
