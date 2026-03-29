@@ -31,7 +31,7 @@ typedef enum {
  */
 typedef struct RB_Node {
     word_t key;                 /**< Fixed-size word used as the unique key */
-    int value;                  /**< Associated value (e.g., occurrence count) */
+    void* value;                /**< Associated, dinamically allocated value (e.g., occurrence count) */
     RB_Color color;             /**< Current node color for balancing logic */
     struct RB_Node *left;       /**< Pointer to the left child */
     struct RB_Node *right;      /**< Pointer to the right child */
@@ -46,6 +46,8 @@ typedef struct RB_Node {
 typedef struct {
     RB_Node *root;              /**< Entry point of the tree */
     RB_Node *nil;               /**< Shared sentinel node representing leaf nodes */
+    RB_Node* (*rb_node_create)(const char* key, void* value);
+    void (*rb_node_delete)(RB_Node* node);
 } RB_Tree;
 
 /**
@@ -63,7 +65,7 @@ RB_Tree* rb_tree_create();
  * @note If the key already exists, the function returns without modifying the tree.
  * @note Triggers RBT rebalancing (rotations/recoloring) to maintain O(log n) height.
  */
-void rb_tree_insert(RB_Tree *tree, const char *key, int value);
+void rb_tree_insert(RB_Tree *tree, const char *key, void* value);
 
 /**
  * @brief Searches for a node by its key.
@@ -87,5 +89,9 @@ void rb_tree_print(RB_Tree *tree);
  * @param tree Pointer to the tree to be destroyed.
  */
 void rb_tree_delete(RB_Tree *tree);
+
+
+RB_Node* rb_node_create_base(const char* key, void* value);
+void rb_node_delete_base(RB_Node* node);
 
 #endif /* MAP_H */
