@@ -47,7 +47,7 @@ void insert_fixup(RB_Tree *tree, RB_Node *z) {
     tree->root->color = BLACK;
 }
 
-RB_Node* rb_node_create(RB_Tree *tree, const char *key, int value)
+RB_Node* rb_node_create(RB_Tree *tree, const char *key, void* value)
 {
     RB_Node *node = (RB_Node*)malloc(sizeof(RB_Node));
     node->key = word_create(key);
