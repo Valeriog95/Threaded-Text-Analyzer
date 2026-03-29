@@ -5,9 +5,8 @@
  * @details Provides a self-balancing binary search tree to ensure O(log n) 
  * performance for insertions and lookups. This implementation uses a 
  * sentinel node (NIL) to simplify boundary condition handling.
- * @version 0.1
+ * @version 0.2
  * @date 2026-03-20
- * @copyright Copyright (c) 2026
  */
 
 #ifndef MAP_H
@@ -19,64 +18,70 @@
  * @brief Node color enumeration for RBT balancing properties.
  */
 typedef enum { 
-    RED,    /**< New nodes are usually inserted as RED */
-    BLACK   /**< Root and NIL nodes are always BLACK */
+    RED,    /**< New nodes are usually inserted as RED to minimize black-height violations */
+    BLACK   /**< Root and NIL nodes are always BLACK by definition */
 } RB_Color;
 
 /**
  * @brief A single node within the Red-Black Tree.
  * @struct RB_Node
- * @details Encapsulates the key-value pair and structural pointers.
- * The use of a 'parent' pointer is mandatory for rebalancing after insertion.
+ * @details Encapsulates a unique word_t key and a generic pointer value.
  */
 typedef struct RB_Node {
-    word_t key;                 /**< Fixed-size word used as the unique key */
-    int value;                  /**< Associated value (e.g., occurrence count) */
-    RB_Color color;             /**< Current node color for balancing logic */
-    struct RB_Node *left;       /**< Pointer to the left child */
-    struct RB_Node *right;      /**< Pointer to the right child */
-    struct RB_Node *parent;     /**< Pointer to the parent node */
+    word_t key;                 /**< Fixed-size word (unique key) */
+    void* value;                /**< Opaque pointer to user-defined data */
+    RB_Color color;             /**< Node color (RED or BLACK) */
+    struct RB_Node *left;       /**< Left child pointer (smaller keys) */
+    struct RB_Node *right;      /**< Right child pointer (larger keys) */
+    struct RB_Node *parent;     /**< Parent pointer (required for rotations) */
 } RB_Node;
 
 /**
  * @brief Red-Black Tree controller structure.
  * @struct RB_Tree
- * @details Tracks the root of the tree and the shared NIL sentinel node.
+ * @details Management structure that holds the tree state and behavior.
  */
 typedef struct {
-    RB_Node *root;              /**< Entry point of the tree */
-    RB_Node *nil;               /**< Shared sentinel node representing leaf nodes */
+    RB_Node *root;              /**< Root of the tree */
+    RB_Node *nil;               /**< Universal NIL sentinel (black, no children) */
+    
+    /** * @brief Optional callback to free the generic 'value' during node deletion.
+     * Set to NULL if the value doesn't require dynamic deallocation.
+     */
+    void (*free_value)(void* value); 
+    
+    /** * @brief Optional callback to convert 'value' to string for printing/logging.
+     */
+    const char* (*value_as_string)(void* value); 
 } RB_Tree;
 
 /**
- * @brief Allocates and initializes a new Red-Black Tree.
- * @details Sets up the NIL sentinel node and an empty root.
- * @return RB_Tree* Pointer to the initialized tree controller.
+ * @brief Initializes a new RB Tree with the NIL sentinel.
+ * @return RB_Tree* Newly allocated tree controller.
  */
 RB_Tree* rb_tree_create();
 
 /**
- * @brief Inserts a new key-value pair into the tree if the key does not exist.
- * @param tree Pointer to the tree controller.
- * @param key String to be stored (converted to word_t).
- * @param value Integer value to associate with the new key.
- * @note If the key already exists, the function returns without modifying the tree.
- * @note Triggers RBT rebalancing (rotations/recoloring) to maintain O(log n) height.
+ * @brief Destroys the tree and performs cleanup.
+ * @details Uses post-order traversal. If free_value is set, it calls it on every node.
  */
-void rb_tree_insert(RB_Tree *tree, const char *key, int value);
+void rb_tree_delete(RB_Tree *tree);
 
 /**
- * @brief Searches for a node by its key.
- * @param tree Pointer to the tree controller.
- * @param key The string to look for.
- * @return RB_Node* Pointer to the found node, or tree->nil if not found.
+ * @brief Inserts a key-value pair.
+ * @param value Pointer to data. Note: the tree does NOT copy the data, only the pointer.
+ * @note If key exists, insertion is aborted (Unique Key Policy).
+ */
+void rb_tree_insert(RB_Tree *tree, const char *key, void* value);
+
+/**
+ * @brief Retrieves a node by its string key.
+ * @return Pointer to node or tree->nil if not found.
  */
 RB_Node* rb_tree_at(RB_Tree *tree, const char *key);
 
 /**
- * @brief Performs an In-Order traversal to print the tree content.
- * @details Useful for debugging and verifying alphabetical order.
- * @param tree Pointer to the tree controller.
+ * @brief Prints the tree using In-Order traversal (Alphabetical).
  */
 void rb_tree_print(RB_Tree *tree);
 
