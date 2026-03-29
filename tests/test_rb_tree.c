@@ -40,6 +40,8 @@ void test_rb_insertion_and_search() {
     assert(node->value == 5);
     assert(strcmp(node->key.value, "apple") == 0);
 
+    rb_tree_delete(tree);
+
     printf("PASSED\n");
 }
 
@@ -60,6 +62,8 @@ void test_rb_structural_invariants() {
 
     /* Property 5: Check black height consistency */
     verify_black_height(tree, tree->root);
+
+    rb_tree_delete(tree);
 
     printf("PASSED\n");
 }
@@ -82,6 +86,8 @@ void test_duplicate_key_policy() {
     /* Value should still be 10 because duplicates are ignored */
     assert(node->value == 10);
 
+    rb_tree_delete(tree);
+
     printf("PASSED\n");
 }
 
@@ -100,6 +106,8 @@ void test_rb_stress_rotations() {
     /* Verify structural integrity after rotations */
     assert(tree->root->color == BLACK);
     verify_black_height(tree, tree->root);
+
+    rb_tree_delete(tree);
 
     printf("PASSED\n");
 }

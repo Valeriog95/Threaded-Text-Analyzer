@@ -27,6 +27,21 @@ RB_Tree* rb_tree_create() {
     return tree;
 }
 
+static void rb_tree_delete_(RB_Tree *tree, RB_Node *node){
+    // Post order visit here to firstly dealloc the children ...
+    if(node != tree->nil){
+        rb_tree_delete_(tree,node->left);
+        rb_tree_delete_(tree,node->right);
+        free(node);
+    }
+} 
+
+void rb_tree_delete(RB_Tree *tree){
+
+    rb_tree_delete_(tree,tree->root);
+    free(tree->nil);    
+    free(tree);    
+}
 
 void rb_tree_insert(RB_Tree *tree, const char *key, int value) {
     
