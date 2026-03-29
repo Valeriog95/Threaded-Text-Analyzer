@@ -5,7 +5,7 @@
 
 extern void insert_fixup(RB_Tree *tree, RB_Node *z);
 
-extern RB_Node* rb_node_create(RB_Tree *tree, const char *key, int value);
+extern RB_Node* rb_node_create(RB_Tree *tree, const char *key, void* value);
 
 static RB_Node* rb_tree_search(RB_Tree *tree, RB_Node *node, const char *key);
 
@@ -23,7 +23,11 @@ RB_Tree* rb_tree_create() {
     tree->nil = (RB_Node*)malloc(sizeof(RB_Node));
     tree->nil->left = tree->nil->right = tree->nil->parent = tree->nil;
     tree->nil->color = BLACK;    
+    tree->nil->value = NULL; // Set to NULL to avoid free() during node deletion ...    
     tree->root = tree->nil;
+    tree->free_value = NULL;
+    tree->value_as_string = NULL;
+    
     return tree;
 }
 
@@ -32,6 +36,10 @@ static void rb_tree_delete_(RB_Tree *tree, RB_Node *node){
     if(node != tree->nil){
         rb_tree_delete_(tree,node->left);
         rb_tree_delete_(tree,node->right);
+        
+        if(tree->free_value != NULL && node->value != NULL)
+            tree->free_value(node->value);
+
         free(node);
     }
 } 
@@ -43,7 +51,7 @@ void rb_tree_delete(RB_Tree *tree){
     free(tree);    
 }
 
-void rb_tree_insert(RB_Tree *tree, const char *key, int value) {
+void rb_tree_insert(RB_Tree *tree, const char *key, void* value) {
     
     if (rb_tree_at(tree, key) != tree->nil)
         return;
@@ -90,8 +98,11 @@ void rb_tree_print_(RB_Tree *tree, RB_Node *node) {
     // visit tree in-order
     if (node != tree->nil) {
         rb_tree_print_(tree, node->left);
-        printf("%s => %d (%s)\n", node->key.value, node->value,
-               node->color == RED ? "RED" : "BLACK");
+        printf(
+            "%s => %s (%s)\n",
+            node->key.value,
+            tree->value_as_string != NULL ? tree->value_as_string(node->value) : "",
+            node->color == RED ? "RED" : "BLACK");
         rb_tree_print_(tree, node->right);
     }
 }
