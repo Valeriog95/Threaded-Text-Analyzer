@@ -32,6 +32,6 @@ RB_Tree* rb_tree_int_create();
  * @param key String key.
  * @param value Integer value to store.
  */
-void rb_tree_int_insert(RB_Tree *tree, const char *key, int value);
+void rb_tree_int_get_or_insert(RB_Tree *tree, const char *key, int value);
 
 #endif /* MAP_UTILS_H */

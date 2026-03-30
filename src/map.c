@@ -10,6 +10,7 @@ static void rb_tree_delete_recursive(RB_Tree *tree, RB_Node *node);
 static void rb_tree_print_recursive(RB_Tree *tree, RB_Node *node);
 static RB_Node* rb_tree_search(RB_Tree *tree, RB_Node *node, const char *key);
 static RB_Node* rb_tree_search_recursive(RB_Tree *tree, RB_Node *node, const char *key);
+static RB_Node* rb_tree_create_and_insert(RB_Tree *tree, const char *key, void* value);
 
 // TODO: static creation of tree->nil here
 
@@ -38,6 +39,7 @@ RB_Tree* rb_tree_create() {
 }
 
 static void rb_tree_delete_recursive(RB_Tree *tree, RB_Node *node){
+    
     // Post order visit here to firstly dealloc the children ...
     if(node != tree->nil){
         rb_tree_delete_recursive(tree,node->left);
@@ -66,31 +68,10 @@ void rb_tree_insert(RB_Tree *tree, const char *key, void* value) {
 
     pthread_mutex_lock(&tree->lock);
 
-    if (rb_tree_search_recursive(tree,tree->root,key) == tree->nil){
+    if (rb_tree_search_recursive(tree,tree->root,key) == tree->nil)
 
-        RB_Node *z = rb_node_create(tree, key, value);
-        RB_Node *y = tree->nil;
-        RB_Node *x = tree->root;
+        rb_tree_create_and_insert(tree, key, value);
     
-        while (x != tree->nil) {
-            y = x;
-            if (strcmp(z->key.value, x->key.value) < 0)
-                x = x->left;
-            else
-                x = x->right;
-        }
-    
-        z->parent = y;
-    
-        if (y == tree->nil)
-            tree->root = z;
-        else if (strcmp(z->key.value, y->key.value) < 0)
-            y->left = z;
-        else
-            y->right = z;
-    
-        insert_fixup(tree, z);
-    }
     
     pthread_mutex_unlock(&tree->lock);
 
@@ -101,6 +82,24 @@ RB_Node* rb_tree_at(RB_Tree *tree,const char *key)
 {
     // Recursive search in aproximatively log(n)
     return tree ? rb_tree_search(tree,tree->root,key) : NULL;
+}
+
+RB_Node* rb_tree_get_or_insert(RB_Tree *tree, const char *key, void* value) {
+
+    if (!tree) return NULL;
+
+    pthread_mutex_lock(&tree->lock);
+
+    // Search for the key using the internal recursive function (no lock) 
+    RB_Node *node = rb_tree_search_recursive(tree, tree->root, key);
+
+    // Node not found, create it
+    if (node == tree->nil) 
+        node = rb_tree_create_and_insert(tree, key, value);
+
+    pthread_mutex_unlock(&tree->lock);
+
+    return node;
 }
 
 
@@ -150,4 +149,32 @@ static RB_Node* rb_tree_search_recursive(RB_Tree *tree, RB_Node *node, const cha
         return rb_tree_search_recursive(tree, node->left, key);
     else
         return rb_tree_search_recursive(tree, node->right, key);
+}
+
+static RB_Node* rb_tree_create_and_insert(RB_Tree *tree, const char *key, void* value){
+
+    RB_Node *z = rb_node_create(tree, key, value);
+    RB_Node *y = tree->nil;
+    RB_Node *x = tree->root;
+
+    while (x != tree->nil) {
+        y = x;
+        if (strcmp(z->key.value, x->key.value) < 0)
+            x = x->left;
+        else
+            x = x->right;
+    }
+
+    z->parent = y;
+
+    if (y == tree->nil)
+        tree->root = z;
+    else if (strcmp(z->key.value, y->key.value) < 0)
+        y->left = z;
+    else
+        y->right = z;
+    
+    insert_fixup(tree, z);
+
+    return z;
 }

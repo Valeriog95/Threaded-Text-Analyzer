@@ -35,15 +35,17 @@ RB_Tree* rb_tree_int_create() {
     return tree;
 }
 
-void rb_tree_int_insert(RB_Tree *tree, const char *key, int value) {
-    // First check if it's not present, 
-    // can be optimized by visit tree only once...
-    if (rb_tree_at(tree, key) == tree->nil) {
-        // Allocate integer on the heap to store it as void*
-        int* heap_val = (int*)malloc(sizeof(int));
-        if (heap_val) {
-            *heap_val = value;
-            rb_tree_insert(tree, key, heap_val);
-        }
-    }
+void rb_tree_int_get_or_insert(RB_Tree *tree, const char *key, int value) {
+    
+    int* value_ = (int*)malloc(sizeof(int));
+    
+    if (!value_) return;
+    *value_ = value;
+    
+    RB_Node* node = rb_tree_get_or_insert(tree, key, value_);
+    
+    // Check if previous pointer is the same of the preiovus one
+    // to understand if it was only get or inserted
+    if (node->value != value_) free(value_); 
+    
 }

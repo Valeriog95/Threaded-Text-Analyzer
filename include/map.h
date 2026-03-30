@@ -83,6 +83,18 @@ void rb_tree_insert(RB_Tree *tree, const char *key, void* value);
 RB_Node* rb_tree_at(RB_Tree *tree, const char *key);
 
 /**
+ * @brief Atomically retrieves an existing node or inserts a new one if the key is absent.
+ * @details This function is the thread-safe "entry point" for map modifications. 
+ * It prevents race conditions by holding the tree mutex throughout the entire 
+ * "search-then-insert" sequence.
+ * @param tree Pointer to the Red-Black Tree.
+ * @param key The string key to search or insert.
+ * @param value Pointer to the value to be stored if the key is missing.
+ * @return RB_Node* Pointer to the node associated with the key (either existing or new).
+ */
+RB_Node* rb_tree_get_or_insert(RB_Tree *tree, const char *key, void* value);
+
+/**
  * @brief Prints the tree using In-Order traversal (Alphabetical).
  */
 void rb_tree_print(RB_Tree *tree);
