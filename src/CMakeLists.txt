@@ -10,4 +10,6 @@ add_library(analyzer_core STATIC
     map_utils.c
 )
 
+target_link_libraries(analyzer_core PRIVATE Threads::Threads)
+
 target_include_directories(analyzer_core PUBLIC ../include)
