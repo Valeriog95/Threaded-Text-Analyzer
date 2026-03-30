@@ -21,7 +21,7 @@ void* stress_test_worker(void* arg) {
         
         // Data creation based on therad ID
         sprintf(key, "t%d_key%d", data->thread_id, i);
-        rb_tree_int_insert(data->tree, key, i);
+        rb_tree_int_get_or_insert(data->tree, key, i);
     }
     return NULL;
 }
