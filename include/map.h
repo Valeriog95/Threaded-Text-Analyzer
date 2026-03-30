@@ -12,6 +12,7 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include <pthread.h>
 #include "word.h"
 
 /**
@@ -44,7 +45,8 @@ typedef struct RB_Node {
 typedef struct {
     RB_Node *root;              /**< Root of the tree */
     RB_Node *nil;               /**< Universal NIL sentinel (black, no children) */
-    
+    pthread_mutex_t lock;       /**< tree lock  */
+
     /** * @brief Optional callback to free the generic 'value' during node deletion.
      * Set to NULL if the value doesn't require dynamic deallocation.
      */

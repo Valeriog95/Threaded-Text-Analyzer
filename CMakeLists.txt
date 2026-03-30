@@ -10,6 +10,9 @@ project(WordCounter
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Find the Threads package (pthreads on Linux)
+find_package(Threads REQUIRED)
+
 # Force output binaries to a specific folder for clarity
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
