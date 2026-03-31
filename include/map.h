@@ -46,6 +46,7 @@ typedef struct {
     RB_Node *root;              /**< Root of the tree */
     RB_Node *nil;               /**< Universal NIL sentinel (black, no children) */
     pthread_mutex_t lock;       /**< tree lock  */
+    size_t size;                /**< the size of the tree */
 
     /** * @brief Optional callback to free the generic 'value' during node deletion.
      * Set to NULL if the value doesn't require dynamic deallocation.
@@ -54,7 +55,8 @@ typedef struct {
     
     /** * @brief Optional callback to convert 'value' to string for printing/logging.
      */
-    const char* (*value_as_string)(void* value); 
+    const char* (*value_as_string)(void* value);
+
 } RB_Tree;
 
 /**
@@ -98,5 +100,48 @@ RB_Node* rb_tree_get_or_insert(RB_Tree *tree, const char *key, void* value);
  * @brief Prints the tree using In-Order traversal (Alphabetical).
  */
 void rb_tree_print(RB_Tree *tree);
+
+/**
+ * @brief Deallocates the entire Red-Black Tree and all its associated memory.
+ * @details This function performs a post-order traversal to safely free each node,
+ * the sentinel NIL node, and finally the tree controller itself.
+ * @param tree Pointer to the tree to be destroyed.
+ */
+void rb_tree_delete(RB_Tree *tree);
+
+
+/* -------------------------------------------------------------------------- */
+/* ITERATOR INTERFACE                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @brief Red-Black Tree Iterator (Alias for Node pointer).
+ * @warning THE ITERATOR IS NOT THREAD-SAFE. 
+ * If the tree is modified (inserted/deleted) by another thread while 
+ * iterating, the behavior is UNDEFINED. 
+ * The caller must hold the tree lock manually if concurrent access is expected.
+ */
+typedef RB_Node* RB_Tree_Iterator;
+
+/**
+ * @brief Returns an iterator to the first element (smallest key).
+ * @return RB_Node* pointing to the minimum node or tree->nil.
+ */
+RB_Tree_Iterator rb_tree_it_begin(RB_Tree* tree);
+
+/**
+ * @brief Returns an iterator representing the end of the tree.
+ * @return tree->nil.
+ */
+RB_Tree_Iterator rb_tree_it_end(RB_Tree* tree);
+
+/**
+ * @brief Advances the iterator to the next element in alphabetical order.
+ * @details Implements the In-Order Successor algorithm.
+ * @param tree Pointer to the tree (needed to identify the NIL sentinel).
+ * @param it Current iterator position.
+ * @return The next RB_Node* in sequence or tree->nil (end()) if finished.
+ */
+RB_Tree_Iterator rb_tree_it_increment(RB_Tree* tree, RB_Tree_Iterator it);
 
 #endif /* MAP_H */

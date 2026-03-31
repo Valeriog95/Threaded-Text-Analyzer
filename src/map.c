@@ -11,6 +11,7 @@ static void rb_tree_print_recursive(RB_Tree *tree, RB_Node *node);
 static RB_Node* rb_tree_search(RB_Tree *tree, RB_Node *node, const char *key);
 static RB_Node* rb_tree_search_recursive(RB_Tree *tree, RB_Node *node, const char *key);
 static RB_Node* rb_tree_create_and_insert(RB_Tree *tree, const char *key, void* value);
+static RB_Node* rb_tree_minimum(RB_Tree* tree, RB_Node* x);
 
 // TODO: static creation of tree->nil here
 
@@ -28,6 +29,7 @@ RB_Tree* rb_tree_create() {
     tree->root = tree->nil;
     tree->free_value = NULL;
     tree->value_as_string = NULL;
+    tree->size = 0;
 
     if (pthread_mutex_init(&tree->lock, NULL) != 0) {
         free(tree->nil);
@@ -38,19 +40,6 @@ RB_Tree* rb_tree_create() {
     return tree;
 }
 
-static void rb_tree_delete_recursive(RB_Tree *tree, RB_Node *node){
-    
-    // Post order visit here to firstly dealloc the children ...
-    if(node != tree->nil){
-        rb_tree_delete_recursive(tree,node->left);
-        rb_tree_delete_recursive(tree,node->right);
-        
-        if(tree->free_value != NULL && node->value != NULL)
-            tree->free_value(node->value);
-
-        free(node);
-    }
-} 
 
 void rb_tree_delete(RB_Tree *tree){
 
@@ -130,6 +119,40 @@ void rb_tree_print_recursive(RB_Tree *tree, RB_Node *node) {
     }
 }
 
+RB_Tree_Iterator rb_tree_it_begin(RB_Tree* tree) {
+    if (!tree || tree->root == tree->nil) 
+        return tree ? tree->nil : NULL;
+        
+    // The start of an in-order traversal is the leftmost node of the root
+    return rb_tree_minimum(tree, tree->root);
+}
+
+RB_Tree_Iterator rb_tree_it_end(RB_Tree* tree) {
+    return tree ? tree->nil : NULL;
+}
+
+RB_Tree_Iterator rb_tree_it_increment(RB_Tree* tree, RB_Tree_Iterator it) {
+    if (!tree || it == tree->nil) return tree->nil;
+
+    /* * Case 1: If the right subtree is not empty, the successor is the 
+     * minimum node in the right subtree.
+     */
+    if (it->right != tree->nil) {
+        return rb_tree_minimum(tree, it->right);
+    }
+
+    /* * Case 2: If the right subtree is empty, we go up the tree until 
+     * we find a node that is the LEFT child of its parent.
+     */
+    RB_Node* y = it->parent;
+    while (y != tree->nil && it == y->right) {
+        it = y;
+        y = y->parent;
+    }
+    
+    return y;
+}
+
 static RB_Node* rb_tree_search(RB_Tree *tree, RB_Node *node, const char *key){
 
     pthread_mutex_lock(&tree->lock);
@@ -176,5 +199,29 @@ static RB_Node* rb_tree_create_and_insert(RB_Tree *tree, const char *key, void* 
     
     insert_fixup(tree, z);
 
+    tree->size++;
+
     return z;
+}
+
+static void rb_tree_delete_recursive(RB_Tree *tree, RB_Node *node){
+    
+    // Post order visit here to firstly dealloc the children ...
+    if(node != tree->nil){
+        rb_tree_delete_recursive(tree,node->left);
+        rb_tree_delete_recursive(tree,node->right);
+        
+        if(tree->free_value != NULL && node->value != NULL)
+            tree->free_value(node->value);
+
+        free(node);
+    }
+} 
+
+static RB_Node* rb_tree_minimum(RB_Tree* tree, RB_Node* x) {
+    if (x == tree->nil) return tree->nil;
+    while (x->left != tree->nil) {
+        x = x->left;
+    }
+    return x;
 }
