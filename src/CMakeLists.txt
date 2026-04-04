@@ -10,6 +10,7 @@ add_library(analyzer_core STATIC
     map_utils.c
     parser.c
     analyzer.c
+    generator.c
 )
 
 target_link_libraries(analyzer_core PRIVATE Threads::Threads)

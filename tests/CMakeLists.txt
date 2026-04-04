@@ -19,6 +19,9 @@ target_link_libraries(test_rb_tree_multi_thread PRIVATE analyzer_core)
 add_executable(test_analyzer test_analyzer.c)
 target_link_libraries(test_analyzer PRIVATE analyzer_core)
 
+add_executable(test_generator test_generator.c)
+target_link_libraries(test_generator PRIVATE analyzer_core)
+
 set_target_properties(test_word test_rb_tree PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
@@ -28,3 +31,4 @@ add_test(NAME RBTreeModuleTest COMMAND test_rb_tree)
 add_test(NAME RBTreeIteratorTest COMMAND test_rb_iterator)
 add_test(NAME RBTreeMTTest COMMAND test_rb_tree_multi_thread)
 add_test(NAME AnalyzerIntegrationTest COMMAND test_analyzer)
+add_test(NAME GeneratorIntegrationTest COMMAND test_generator)
