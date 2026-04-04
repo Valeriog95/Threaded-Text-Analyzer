@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "analyzer.h"
+#include "parser.h"
 #include "map.h"
 
 const char test_string[] = "Cosa dicono le previsioni del tempo? Previsioni del tempo di oggi: tempo incerto! Previsioni di domani?";
@@ -54,7 +55,6 @@ void test_parser_integration(RB_Tree* main_tree) {
 
 /**
  * @brief Prints the nested structure using iterators.
- * Format: [word] -> (successor: count) (successor: count)
  */
 void print_frequency_table(RB_Tree* main_tree) {
     printf("\n--- Text Phrase: ---\n");
@@ -67,7 +67,8 @@ void print_frequency_table(RB_Tree* main_tree) {
     {
         printf("[%s] -> ", it_main->key.value);
         
-        RB_Tree* successor_tree = (RB_Tree*)it_main->value;
+        SuccessorContext* ctx = (SuccessorContext*)it_main->value;
+        RB_Tree* successor_tree = ctx->tree;
         
         for (RB_Tree_Iterator it_sub = rb_tree_it_begin(successor_tree); 
              it_sub != rb_tree_it_end(successor_tree); 
@@ -119,28 +120,30 @@ void test_complex_sentence_analysis() {
     // Check "previsioni" -> "del" (appears 2 times) and "previsioni" -> "di" (1 time)
     RB_Node* node_prev = rb_tree_at(main_tree, "previsioni");
     assert(node_prev != main_tree->nil);
-    RB_Tree* tree_prev = (RB_Tree*)node_prev->value;
+    SuccessorContext* ctx_prev = (SuccessorContext*)node_prev->value;
     
-    RB_Node* node_del = rb_tree_at(tree_prev, "del");
-    assert(node_del != tree_prev->nil);
+    assert(ctx_prev->total_entries == 3); // "del", "del", "di"
+    
+    RB_Node* node_del = rb_tree_at(ctx_prev->tree, "del");
+    assert(node_del != ctx_prev->tree->nil);
     assert(*(int*)node_del->value == 2);
 
-    // Check "tempo" -> "?" (1 time) and "tempo" -> "di" (1 time)
+    // Check "tempo" -> "?"
     RB_Node* node_tempo = rb_tree_at(main_tree, "tempo");
     assert(node_tempo != main_tree->nil);
-    RB_Tree* tree_tempo = (RB_Tree*)node_tempo->value;
+    SuccessorContext* ctx_tempo = (SuccessorContext*)node_tempo->value;
     
-    RB_Node* node_tempo_q = rb_tree_at(tree_tempo, "?");
-    assert(node_tempo_q != tree_tempo->nil);
+    RB_Node* node_tempo_q = rb_tree_at(ctx_tempo->tree, "?");
+    assert(node_tempo_q != ctx_tempo->tree->nil);
     assert(*(int*)node_tempo_q->value == 1);
 
     // CRITICAL REQUIREMENT: Last token is '?', it must point back to 'cosa'
     RB_Node* node_last_q = rb_tree_at(main_tree, "?");
     assert(node_last_q != main_tree->nil);
-    RB_Tree* tree_last_q = (RB_Tree*)node_last_q->value;
+    SuccessorContext* ctx_last_q = (SuccessorContext*)node_last_q->value;
     
-    RB_Node* node_back_to_start = rb_tree_at(tree_last_q, "cosa");
-    assert(node_back_to_start != tree_last_q->nil);
+    RB_Node* node_back_to_start = rb_tree_at(ctx_last_q->tree, "cosa");
+    assert(node_back_to_start != ctx_last_q->tree->nil);
     assert(*(int*)node_back_to_start->value == 1);
 
     // 6. Cleanup
