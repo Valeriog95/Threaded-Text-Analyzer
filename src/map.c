@@ -119,6 +119,26 @@ void rb_tree_print_recursive(RB_Tree *tree, RB_Node *node) {
     }
 }
 
+void rb_tree_get_or_insert_execute(RB_Tree *tree, const char *key, RB_Tree_Atomic_Action action) {
+    
+    if (!tree || !action) return;
+
+    pthread_mutex_lock(&tree->lock);
+
+    // Internal search without re-locking
+    RB_Node *node = rb_tree_search_recursive(tree, tree->root, key);
+
+    // Create if not exists and execute action while still holding the lock
+    if (node == tree->nil) {
+        node = rb_tree_create_and_insert(tree, key, NULL);
+        action(node, true);
+    } else{
+        action(node, false);
+    }
+
+    pthread_mutex_unlock(&tree->lock);
+}
+
 RB_Tree_Iterator rb_tree_it_begin(RB_Tree* tree) {
     if (!tree || tree->root == tree->nil) 
         return tree ? tree->nil : NULL;

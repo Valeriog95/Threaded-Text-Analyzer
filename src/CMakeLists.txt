@@ -8,6 +8,8 @@ add_library(analyzer_core STATIC
     node.c
     map.c
     map_utils.c
+    parser.c
+    analyzer.c
 )
 
 target_link_libraries(analyzer_core PRIVATE Threads::Threads)
