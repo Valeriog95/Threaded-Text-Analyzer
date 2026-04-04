@@ -13,6 +13,7 @@
 #define MAP_H
 
 #include <pthread.h>
+#include <stdbool.h>
 #include "word.h"
 
 /**
@@ -109,6 +110,23 @@ void rb_tree_print(RB_Tree *tree);
  */
 void rb_tree_delete(RB_Tree *tree);
 
+/**
+ * @brief Callback for atomic operations on a tree node.
+ * @param node The node found or newly created.
+ * @param was_inserted true if the node was just created, false if it already existed.
+ */
+typedef void (*RB_Tree_Atomic_Action)(RB_Node* node, bool was_inserted);
+
+/**
+ * @brief Thread-safe "Get or Create" operation that executes a custom action.
+ * @details Searches for a key. If not found, creates a node with a NULL value.
+ * Then executes the provided callback while holding the tree lock.
+ * This ensures the entire check-insert-update sequence is atomic.
+ * @param tree Pointer to the Red-Black Tree.
+ * @param key The string key to search or insert.
+ * @param action The function to execute on the resulting node.
+ */
+void rb_tree_get_or_insert_execute(RB_Tree *tree, const char *key, RB_Tree_Atomic_Action action);
 
 /* -------------------------------------------------------------------------- */
 /* ITERATOR INTERFACE                                                         */
