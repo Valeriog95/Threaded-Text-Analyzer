@@ -13,6 +13,7 @@
 #define MAP_H
 
 #include <pthread.h>
+#include <stdbool.h>
 #include "word.h"
 
 /**
