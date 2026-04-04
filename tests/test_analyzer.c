@@ -8,6 +8,51 @@
 const char test_string[] = "Cosa dicono le previsioni del tempo? Previsioni del tempo di oggi: tempo incerto! Previsioni di domani?";
 
 /**
+ * @brief Test expected csv
+ */
+const char expected_csv[] = 
+    "!,previsioni,1.0000\n"
+    "?,cosa,0.5000,previsioni,0.5000\n"
+    "cosa,dicono,1.0000\n"
+    "del,tempo,1.0000\n"
+    "di,domani,0.5000,oggi,0.5000\n"
+    "dicono,le,1.0000\n"
+    "domani,?,1.0000\n"
+    "incerto,!,1.0000\n"
+    "le,previsioni,1.0000\n"
+    "oggi,tempo,1.0000\n"
+    "previsioni,del,0.6667,di,0.3333\n"
+    "tempo,?,0.3333,di,0.3333,incerto,0.3333\n";
+
+    /**
+ * @brief Test that generated csv is the same as the required one.
+ */
+void test_parser_integration(RB_Tree* main_tree) {
+    printf("Running CSV Integration Test...\n");
+
+    char buffer[4096] = {0}; 
+    FILE* mem_stream = fmemopen(buffer, sizeof(buffer), "w");
+    
+    if (!mem_stream) {
+        perror("fmemopen failed");
+        return;
+    }
+
+    parser_export_csv(mem_stream, main_tree);
+    fflush(mem_stream);
+    fclose(mem_stream);
+
+    if (strcmp(buffer, expected_csv) == 0) {
+        printf("CSV Integration Test: PASSED\n");
+    } else {
+        printf("CSV Integration Test: FAILED!\n");
+        printf("--- Expected ---\n%s", expected_csv);
+        printf("--- Got ---\n%s", buffer);
+        assert(0 && "CSV output mismatch");
+    }
+}
+
+/**
  * @brief Prints the nested structure using iterators.
  * Format: [word] -> (successor: count) (successor: count)
  */
@@ -61,9 +106,10 @@ void test_complex_sentence_analysis() {
     analyzer_process_text(input, main_tree);
     fclose(input);
 
-    // Show the output (should be automatic tested as well...)
+    // Show the output (and its automatic test)
     printf("\n--- GENERATED CSV OUTPUT ---\n");
     parser_export_csv(stdout, main_tree);
+    test_parser_integration(main_tree);
 
     // 4. Visual Debug
     print_frequency_table(main_tree);
