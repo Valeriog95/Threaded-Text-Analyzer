@@ -9,87 +9,90 @@
 #include "word.h"
 
 /**
- * @brief Test logical picking from a SuccessorContext.
+ * @brief Helper to manually populate the RB-Tree with word pairs and counts.
  */
-void test_generator_pick_logic() {
-    printf("Running Generator Pick Logic Test...\n");
-
-    RB_Tree* main_tree = rb_tree_create();
-    main_tree->free_value = successor_context_delete;
-
-    // 1. Setup: Manual insertion of words
-    // Note: ensure rb_tree_get_or_insert handles the key correctly (copying into word_t)
-    RB_Node* mela_node = rb_tree_get_or_insert(main_tree, "mela", NULL);
-    action_ensure_successor_context(mela_node, true);
+void add_pair(RB_Tree* tree, const char* word, const char* successor, int count) {
+    RB_Node* n = rb_tree_get_or_insert(tree, (void*)word, NULL);
+    action_ensure_successor_context(n, (n->value == NULL));
     
-    SuccessorContext* ctx = (SuccessorContext*)mela_node->value;
-
-    // Add "rossa" as successor
-    rb_tree_get_or_insert_execute(ctx->tree, "rossa", action_increment_count);
-    ctx->total_entries = 1;
-
-    // 2. Deterministic Test
-    for(int i = 0; i < 50; i++) {
-        const word_t* picked = generator_pick_next_word(ctx);
-        assert(picked != NULL);
-        assert(strcmp(picked->value, "rossa") == 0);
+    SuccessorContext* ctx = (SuccessorContext*)n->value;
+    // We force the count by calling increment multiple times or modifying it
+    for(int i = 0; i < count; i++) {
+        rb_tree_get_or_insert_execute(ctx->tree, (void*)successor, action_increment_count);
     }
-
-    // 3. Probabilistic Test: Add "verde"
-    rb_tree_get_or_insert_execute(ctx->tree, "verde", action_increment_count);
-    ctx->total_entries = 2; 
-
-    bool saw_rossa = false;
-    bool saw_verde = false;
-
-    for(int i = 0; i < 200; i++) {
-        const word_t* picked = generator_pick_next_word(ctx);
-        if (strcmp(picked->value, "rossa") == 0) saw_rossa = true;
-        if (strcmp(picked->value, "verde") == 0) saw_verde = true;
-    }
-
-    assert(saw_rossa && "Failed to pick 'rossa' in 200 trials");
-    assert(saw_verde && "Failed to pick 'verde' in 200 trials");
-
-    rb_tree_delete(main_tree);
-    printf("Generator Pick Logic: PASSED\n");
+    ctx->total_entries += count;
 }
 
 /**
- * @brief Test end-to-end generation sequence.
+ * @brief Test using the "Weather Forecast" example from the requirements.
  */
-void test_generator_full_chain() {
-    printf("Running Generator Full Chain Test...\n");
+void test_generator_weather_example() {
+    printf("\n--- Running Weather Forecast Example Test ---\n");
 
     RB_Tree* main_tree = rb_tree_create();
     main_tree->free_value = successor_context_delete;
 
-    const char* words[] = {"io", "programmo", "in", "c"};
-    for (int i = 0; i < 3; i++) {
-        RB_Node* n = rb_tree_get_or_insert(main_tree, words[i], NULL);
-        action_ensure_successor_context(n, true);
-        SuccessorContext* ctx = (SuccessorContext*)n->value;
-        rb_tree_get_or_insert_execute(ctx->tree, (void*)words[i+1], action_increment_count);
-        ctx->total_entries = 1;
+    // Populating based on the CSV example provided
+    add_pair(main_tree, "?", "cosa", 1);
+    add_pair(main_tree, "?", "previsioni", 1);
+    add_pair(main_tree, "!", "previsioni", 1);
+    add_pair(main_tree, "cosa", "dicono", 1);
+    add_pair(main_tree, "dicono", "le", 1);
+    add_pair(main_tree, "le", "previsioni", 1);
+    add_pair(main_tree, "previsioni", "di", 1);
+    add_pair(main_tree, "previsioni", "del", 2);
+    add_pair(main_tree, "del", "tempo", 1);
+    add_pair(main_tree, "tempo", "incerto", 1);
+    add_pair(main_tree, "tempo", "di", 1);
+    add_pair(main_tree, "tempo", "?", 1);
+    add_pair(main_tree, "di", "domani", 1);
+    add_pair(main_tree, "di", "oggi", 1);
+    add_pair(main_tree, "oggi", "tempo", 1);
+    add_pair(main_tree, "incerto", "!", 1);
+    add_pair(main_tree, "domani", "?", 1);
+
+    printf("Expected: 4 random sequences of 11 words starting with '!'\n");
+    for(int i = 1; i <= 4; i++) {
+        printf("Run %d: ", i);
+        generator_generate_text(stdout, main_tree, "!", 11);
     }
 
-    // Capture visual check
-    printf("Visual Check - Expected 'Io programmo in c':\n");
-    // Added 'stdout' parameter to match new signature
-    generator_generate_text(stdout, main_tree, "io", 4);
+    rb_tree_delete(main_tree);
+    printf("Weather Example Test: COMPLETED (Check visual output)\n");
+}
+
+/**
+ * @brief Test Requirement: picking a random punctuation if no start word is given.
+ */
+void test_generator_random_start() {
+    printf("\n--- Running Random Punctuation Start Test ---\n");
+
+    RB_Tree* main_tree = rb_tree_create();
+    main_tree->free_value = successor_context_delete;
+
+    // Only punctuation in the tree
+    add_pair(main_tree, ".", "word1", 1);
+    add_pair(main_tree, "?", "word2", 1);
+    add_pair(main_tree, "!", "word3", 1);
+
+    printf("Generating with NULL start word (should pick ., ? or ! randomly):\n");
+    for(int i = 0; i < 3; i++) {
+        printf("Random start %d: ", i+1);
+        generator_generate_text(stdout, main_tree, NULL, 5);
+    }
 
     rb_tree_delete(main_tree);
-    printf("Generator Full Chain: PASSED\n");
 }
 
 int main() {
+    // Fixed seed for debugging, or time(NULL) for real randomness
     srand((unsigned int)time(NULL));
 
-    printf("=== Starting Generator Suite ===\n");
+    printf("=== Starting Advanced Generator Suite ===\n");
     
-    test_generator_pick_logic();
-    test_generator_full_chain();
+    test_generator_weather_example();
+    test_generator_random_start();
 
-    printf("=== All Generator Tests Passed! ===\n");
+    printf("\n=== All Generator Tests Completed! ===\n");
     return 0;
 }

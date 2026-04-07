@@ -63,7 +63,8 @@ void generator_generate_text(FILE* out, RB_Tree* main_tree, const char* start_wo
     if (!main_tree || num_words <= 0) return;
 
     const word_t* current_word = NULL;
-    bool capitalize_next = true; /* Sentences always start with a capital letter */
+    // Requirement: Start with capital letter
+    bool capitalize_next = true; 
 
     /* --- INITIAL SELECTION --- */
     if (start_word != NULL) {
@@ -73,11 +74,10 @@ void generator_generate_text(FILE* out, RB_Tree* main_tree, const char* start_wo
         }
     } 
     
-    /* If no start_word provided or not found, pick a random punctuation from the table */
+    // Fallback if start_word is NULL/missing
     if (current_word == NULL) {
         const char* puncts[] = {".", "?", "!"};
         int offset = rand() % 3;
-        
         for (int i = 0; i < 3; i++) {
             RB_Node* node = rb_tree_at(main_tree, (void*)puncts[(offset + i) % 3]);
             if (node != main_tree->nil) {
@@ -87,37 +87,26 @@ void generator_generate_text(FILE* out, RB_Tree* main_tree, const char* start_wo
         }
     }
 
-    /* Fallback: if tree is empty or no punctuation found, abort */
-    if (current_word == NULL) {
-        fprintf(stderr, "[Generator Error] Initial word or punctuation not found.\n");
-        return;
-    }
+    if (current_word == NULL) return;
 
     /* --- GENERATION LOOP --- */
     for (int i = 0; i < num_words; i++) {
-        /* 1. Spacing logic: do not add space before strong punctuation or at the very start */
-        if (i > 0 && !is_strong_punctuation(current_word->value)) {
-            fprintf(out, " ");
-        }
-
-        /* 2. Print the word with proper capitalization */
-        print_word_formatted(out, current_word->value, capitalize_next);
-
-        /* 3. Update capitalization flag for the next word */
-        capitalize_next = is_strong_punctuation(current_word->value);
-
-        /* 4. Exit if we reached the word limit */
-        if (i == num_words - 1) break;
-
-        /* 5. Find the current word node in the main tree to access its successors */
+        // 1. Move to the next word BEFORE printing
         RB_Node* main_node = rb_tree_at(main_tree, (void*)current_word->value);
         if (main_node == main_tree->nil) break;
 
         SuccessorContext* ctx = (SuccessorContext*)main_node->value;
         const word_t* next_word = generator_pick_next_word(ctx);
-
         if (!next_word) break;
+        
         current_word = next_word;
+
+        // 2. Print with space (except first word generated)
+        if (i > 0) fprintf(out, " ");
+        print_word_formatted(out, current_word->value, capitalize_next);
+
+        // 3. Update capitalization
+        capitalize_next = is_strong_punctuation(current_word->value);
     }
 
     fprintf(out, "\n");
