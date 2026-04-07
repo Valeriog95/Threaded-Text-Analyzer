@@ -6,48 +6,46 @@
 #include "generator.h"
 #include "analyzer.h"
 #include "map.h"
+#include "word.h"
 
 /**
  * @brief Test logical picking from a SuccessorContext.
- * Verifies that probabilities are respected and all options are eventually picked.
  */
 void test_generator_pick_logic() {
     printf("Running Generator Pick Logic Test...\n");
 
-    // 1. Setup a controlled tree
     RB_Tree* main_tree = rb_tree_create();
     main_tree->free_value = successor_context_delete;
 
-    // Insert "mela" with NULL value initially
+    // 1. Setup: Manual insertion of words
+    // Note: ensure rb_tree_get_or_insert handles the key correctly (copying into word_t)
     RB_Node* mela_node = rb_tree_get_or_insert(main_tree, "mela", NULL);
-    // Initialize the context manually using our action
     action_ensure_successor_context(mela_node, true);
     
     SuccessorContext* ctx = (SuccessorContext*)mela_node->value;
 
-    // Add "rossa" as the only successor
+    // Add "rossa" as successor
     rb_tree_get_or_insert_execute(ctx->tree, "rossa", action_increment_count);
     ctx->total_entries = 1;
 
-    // 2. Deterministic Test: Only one option exists
+    // 2. Deterministic Test
     for(int i = 0; i < 50; i++) {
-        const char* picked = generator_pick_next_word(ctx);
+        const word_t* picked = generator_pick_next_word(ctx);
         assert(picked != NULL);
-        assert(strcmp(picked, "rossa") == 0);
+        assert(strcmp(picked->value, "rossa") == 0);
     }
 
     // 3. Probabilistic Test: Add "verde"
     rb_tree_get_or_insert_execute(ctx->tree, "verde", action_increment_count);
-    ctx->total_entries = 2; // Now 50/50 chance
+    ctx->total_entries = 2; 
 
     bool saw_rossa = false;
     bool saw_verde = false;
 
-    // Running 200 iterations makes the chance of not seeing one of them (0.5^200) impossible
     for(int i = 0; i < 200; i++) {
-        const char* picked = generator_pick_next_word(ctx);
-        if (strcmp(picked, "rossa") == 0) saw_rossa = true;
-        if (strcmp(picked, "verde") == 0) saw_verde = true;
+        const word_t* picked = generator_pick_next_word(ctx);
+        if (strcmp(picked->value, "rossa") == 0) saw_rossa = true;
+        if (strcmp(picked->value, "verde") == 0) saw_verde = true;
     }
 
     assert(saw_rossa && "Failed to pick 'rossa' in 200 trials");
@@ -59,7 +57,6 @@ void test_generator_pick_logic() {
 
 /**
  * @brief Test end-to-end generation sequence.
- * Verifies that the generator follows the Markov chain: A -> B -> C
  */
 void test_generator_full_chain() {
     printf("Running Generator Full Chain Test...\n");
@@ -67,7 +64,6 @@ void test_generator_full_chain() {
     RB_Tree* main_tree = rb_tree_create();
     main_tree->free_value = successor_context_delete;
 
-    // Build chain: "io" -> "programmo" -> "in" -> "c"
     const char* words[] = {"io", "programmo", "in", "c"};
     for (int i = 0; i < 3; i++) {
         RB_Node* n = rb_tree_get_or_insert(main_tree, words[i], NULL);
@@ -77,16 +73,16 @@ void test_generator_full_chain() {
         ctx->total_entries = 1;
     }
 
-    // Capture stdout or just run to ensure no crashes
-    printf("Visual Check - Expected 'io programmo in c': ");
-    generator_generate_text(main_tree, "io", 4);
+    // Capture visual check
+    printf("Visual Check - Expected 'Io programmo in c':\n");
+    // Added 'stdout' parameter to match new signature
+    generator_generate_text(stdout, main_tree, "io", 4);
 
     rb_tree_delete(main_tree);
     printf("Generator Full Chain: PASSED\n");
 }
 
 int main() {
-    // Seed the random generator for the tests
     srand((unsigned int)time(NULL));
 
     printf("=== Starting Generator Suite ===\n");
