@@ -1,7 +1,12 @@
 #include "parser.h"
 #include "analyzer.h"
+#include "map_utils.h"
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+#define MAX_LINE_LEN 4096
 
 bool parser_get_next_word(FILE *file, word_t *out_word) {
     if (!file || !out_word) return false;
@@ -68,4 +73,52 @@ void parser_export_csv(FILE *out, RB_Tree *main_tree) {
         }
         fprintf(out, "\n");
     }
+}
+
+int parser_import_csv(FILE* input, RB_Tree* tree) {
+    char line[MAX_LINE_LEN];
+    
+    while (fgets(line, sizeof(line), input)) {
+        line[strcspn(line, "\r\n")] = 0; // Remove newline
+
+        char *token = strtok(line, ",");
+        if (!token) continue;
+
+        // 1. Get or create the main word node in the main tree
+        RB_Node* node = rb_tree_get_or_insert(tree, token, NULL);
+        
+        // 2. Ensure it has a SuccessorContext (Task 1 logic reuse)
+        action_ensure_successor_context(node, (node->value == NULL));
+        SuccessorContext* ctx = (SuccessorContext*)node->value;
+
+        double sum_frequencies = 0.0;
+
+        // 3. Process pairs: successor_word, frequency
+        while ((token = strtok(NULL, ",")) != NULL) {
+            char *successor_word = token;
+            token = strtok(NULL, ",");
+            if (!token) break;
+
+            double freq = atof(token);
+            sum_frequencies += freq;
+
+            /* Convert frequency to integer weight (scale 1000) */
+            int weight = (int)(freq * 1000.0);
+            
+            /* * Use map_utils API to store the integer weight.
+             * This function handles malloc(sizeof(int)) internally.
+             */
+            rb_tree_int_get_or_insert(ctx->tree, successor_word, weight);
+            
+            // Update total for the Markov selection logic
+            ctx->total_entries += weight;
+        }
+
+        /* Integrity check: sum should be approx 1.0 */
+        if (fabs(sum_frequencies - 1.0) > 0.001) {
+            fprintf(stderr, "[WARNING] Integrity failed for '%s': sum is %.4f\n", 
+                    node->key.value, sum_frequencies);
+        }
+    }
+    return 0;
 }

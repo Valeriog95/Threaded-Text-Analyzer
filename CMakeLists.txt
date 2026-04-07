@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project metadata
-project(WordCounter 
+project(ThreadedTextAnalyzer 
         VERSION 1.0 
         DESCRIPTION "Word frequency counter for OS2 Exam"
         LANGUAGES C)

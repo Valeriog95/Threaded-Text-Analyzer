@@ -58,3 +58,18 @@ dkms.conf
 build/
 bin/
 .DS_Store
+
+# vscode files
+.vscode/*
+
+# generated files (output examples commented):
+*.csv
+*.txt
+# !test.txt
+# !generated.txt
+# !result.csv
+
+# doxygen
+html/
+latex/
+.DS_Store

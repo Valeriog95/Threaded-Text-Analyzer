@@ -22,4 +22,11 @@ bool parser_get_next_word(FILE *file, word_t *out_word);
  */
 void parser_export_csv(FILE *out, RB_Tree *main_tree);
 
+/**
+ * @brief Imports a frequency table from a CSV file into the RB-Tree.
+ * @details Validates that the sum of frequencies for each line is 1.0.
+ * @return 0 on success, or an error code if the file is invalid.
+ */
+int parser_import_csv(FILE* input, RB_Tree* tree);
+
 #endif
